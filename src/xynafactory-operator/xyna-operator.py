@@ -162,7 +162,7 @@ def get_service_manifest(cr_service_data, app_label, namespace, logger):
 
 
 def make_deployment_object(name, namespace, replicas, image):
-    metadata = client.V1ObjectMeta(name=name, namespace=namespace)
+    metadata = client.V1ObjectMeta(name=f'{name}-deployment', namespace=namespace)
     labels = {"app": name}
     selector = client.V1LabelSelector(match_labels=labels)
     container = client.V1Container(
@@ -201,6 +201,7 @@ def on_create(spec, name, namespace, logger, **kwargs):
     services = [get_service_manifest(servicePort, name, namespace, logger) for servicePort in servicePorts]
     logger.debug(f"Applying deployments for services")
     for service in services:
+        
         core_v1.create_namespaced_service(namespace=namespace, body=service['body'])
         logger.info(f"Created service {service['serviceName']} in namespace {namespace}")
 
@@ -233,12 +234,12 @@ def on_create(spec, name, namespace, logger, **kwargs):
     logger.debug(f"Applying deployment manifest {name}")
     try:
         apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment_manifest)
-        logger.info(f"Created Deployment {name} in namespace {namespace}")
+        logger.info(f"Created Deployment {name}-deployment in namespace {namespace}")
     except ApiException as e:
         if e.status == 409:
             # Deployment already exists, update it
-            apps_v1.replace_namespaced_deployment(name, namespace, deployment_manifest)
-            logger.info(f"Updated Deployment {name} in namespace {namespace}")
+            apps_v1.replace_namespaced_deployment(f'{name}-deployment', namespace, deployment_manifest)
+            logger.info(f"Updated Deployment {name}-deployment  in namespace {namespace}")
         else:
             raise
 
@@ -296,11 +297,11 @@ def on_update(spec, name, namespace, logger, **kwargs):
     # Similar to on_create, possibly update deployment or re-import apps
     logger.info(f"Received update for {name} in {namespace}")
     desired_replicas = spec.get('replicas', 1)
-    current_replicas = get_current_deployment_replicas(name, namespace)
 
-    if current_replicas != desired_replicas:
-        patch_deployment_replicas(name, namespace, desired_replicas)
-        logger.info(f"Deployment scaled to {desired_replicas}")
+    # Patch the deployment's replicas count to desired_replicas
+    patch = {'spec': {'replicas': desired_replicas}}
+    apps_v1.patch_namespaced_deployment(name + '-deployment', namespace, patch)
+    logger.info(f"Scaled deployment {name}-deployment to {desired_replicas} replicas")
 
 
 @kopf.on.delete('xyna.com', 'v1alpha1', 'xynafactoryservices')
