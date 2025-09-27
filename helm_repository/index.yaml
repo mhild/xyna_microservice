@@ -7,6 +7,6 @@ entries:
     digest: 68c01f588ccaa53ea0a35b7a52ec32cb922f500518714c4bdb8194d9290b6d5d
     name: xynafactory-operator
     urls:
-    - https://mhild.github.io/xyna_microservice/help_repository/xynafactory-operator-0.1.0.tgz
+    - https://mhild.github.io/xyna_microservice/helm_repository/xynafactory-operator-0.1.0.tgz
     version: 0.1.0
 generated: "2025-09-27T21:53:30.483857+02:00"
