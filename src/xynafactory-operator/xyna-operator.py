@@ -187,6 +187,64 @@ def make_deployment_object(name, namespace, replicas, image):
     )
     return deployment
 
+
+def check_applications(applications, name, namespace, logger):
+
+    label_selector = f"app={name}"
+    if wait_for_pods_ready(core_v1, namespace, label_selector):
+    # Retrieve pods for this deployment (simplified: only first pod)
+        pods = core_v1.list_namespaced_pod(namespace=namespace, label_selector=f"app={name}")
+        if not pods.items:
+            logger.info("No pods found yet, will requeue")
+            return {'requeue': True}
+
+        for pod in pods.items:
+            container_name = pod.spec.containers[0].name
+
+            for app in applications:
+                zip_url = app.get("appUrl")
+                app_name = app.get("name")
+                zip_name = zip_url.split("/")[-1]
+
+                # check, if app is present
+                app_info_cmd = ["/bin/sh", "-c", f"/opt/xyna/xyna_001/server/xynafactory.sh listapplications | grep {app_name}"]
+                logger.info(f"Getting app-info for {app_name} in pod {pod.metadata.name}")
+                output = exec_command_in_pod(namespace, pod.metadata.name, container_name, app_info_cmd, logger)
+                logger.info(f"App info output: {output}")
+                version_str = fetch_second_quote_content(output)
+
+                if version_str is None:
+                    
+
+                    # Download the zip inside the pod and run import CLI command
+                    download_cmd = ['curl', '-o', f'/tmp/{zip_name}', zip_url]
+                    logger.info(f"Downloading {zip_url} (application '{app_name}') inside pod {pod.metadata.name}")
+                    output = exec_command_in_pod(namespace, pod.metadata.name, container_name, download_cmd, logger)
+                    logger.info(f"Download output: {output}")
+
+                    import_cmd = ['/opt/xyna/xyna_001/server/xynafactory.sh', 'importapplication', '-filename', f'/tmp/{zip_name}']
+                    logger.info(f"Importing file {zip_name} in pod {pod.metadata.name}")
+                    output = exec_command_in_pod(namespace, pod.metadata.name, container_name, import_cmd, logger)
+                    logger.info(f"Import output: {output}")
+
+                    # get version
+                    app_info_cmd = ["/bin/sh", "-c", f"/opt/xyna/xyna_001/server/xynafactory.sh listapplications | grep {app_name}"]
+                    logger.info(f"Getting app-info for {app_name} in pod {pod.metadata.name}")
+                    output = exec_command_in_pod(namespace, pod.metadata.name, container_name, app_info_cmd, logger)
+                    logger.info(f"App info output: {output}")
+                    version_str = fetch_second_quote_content(output)
+                    
+                start_cmd = ['/opt/xyna/xyna_001/server/xynafactory.sh', 'startapplication', '-applicationName', f'"{app_name}"', '-versionName', f'"{version_str}"']
+                logger.info(f"Starting app {app_name} in pod {pod.metadata.name}")
+                output = exec_command_in_pod(namespace, pod.metadata.name, container_name, start_cmd, logger)
+                logger.info(f"Start output: {output}")
+
+    else:
+        # Timeout or pod not ready, handle accordingly
+        logger.error(f"Failed to finish deployment {name}, pod didn't get ready: {str(e)}")
+
+
+
 @kopf.on.create('xyna.com', 'v1alpha1', 'xynafactoryservices')
 def on_create(spec, name, namespace, logger, **kwargs):
 
@@ -229,96 +287,55 @@ def on_create(spec, name, namespace, logger, **kwargs):
     # }
 
     deployment_manifest = make_deployment_object(name, namespace, replicas, image)
+    kopf.adopt(deployment_manifest)  # Mark ownership
 
-    # Create or update Deployment
-    logger.debug(f"Applying deployment manifest {name}")
     try:
         apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment_manifest)
-        logger.info(f"Created Deployment {name}-deployment in namespace {namespace}")
+        logger.info(f"Created Deployment {name}-deployment")
     except ApiException as e:
         if e.status == 409:
-            # Deployment already exists, update it
-            apps_v1.replace_namespaced_deployment(f'{name}-deployment', namespace, deployment_manifest)
-            logger.info(f"Updated Deployment {name}-deployment  in namespace {namespace}")
+            apps_v1.patch_namespaced_deployment(name + "-deployment", namespace, deployment_manifest)
+            logger.info(f"Patched existing Deployment {name}-deployment")
         else:
             raise
 
     # Optionally handle exec inside pod to import each application zip here
     # This requires listing pods with label app=name and running kubectl exec equivalents
 
-
-    label_selector = f"app={name}"
-    if wait_for_pods_ready(core_v1, namespace, label_selector):
-    # Retrieve pods for this deployment (simplified: only first pod)
-        pods = core_v1.list_namespaced_pod(namespace=namespace, label_selector=f"app={name}")
-        if not pods.items:
-            logger.info("No pods found yet, will requeue")
-            return {'requeue': True}
-
-        pod = pods.items[0]
-        container_name = pod.spec.containers[0].name
-
-        for app in applications:
-            zip_url = app.get("appUrl")
-            app_name = app.get("name")
-            zip_name = zip_url.split("/")[-1]
-
-            # Download the zip inside the pod and run import CLI command
-            download_cmd = ['curl', '-o', f'/tmp/{zip_name}', zip_url]
-            logger.info(f"Downloading {zip_url} (application '{app_name}') inside pod {pod.metadata.name}")
-            output = exec_command_in_pod(namespace, pod.metadata.name, container_name, download_cmd, logger)
-            logger.info(f"Download output: {output}")
-
-            import_cmd = ['/opt/xyna/xyna_001/server/xynafactory.sh', 'importapplication', '-filename', f'/tmp/{zip_name}']
-            logger.info(f"Importing file {zip_name} in pod {pod.metadata.name}")
-            output = exec_command_in_pod(namespace, pod.metadata.name, container_name, import_cmd, logger)
-            logger.info(f"Import output: {output}")
-
-            # get version
-            app_info_cmd = ["/bin/sh", "-c", f"/opt/xyna/xyna_001/server/xynafactory.sh listapplications | grep {app_name}"]
-            logger.info(f"Getting app-info for {app_name} in pod {pod.metadata.name}")
-            output = exec_command_in_pod(namespace, pod.metadata.name, container_name, app_info_cmd, logger)
-            logger.info(f"App info output: {output}")
-            version_str = fetch_second_quote_content(output)
-
-            start_cmd = ['/opt/xyna/xyna_001/server/xynafactory.sh', 'startapplication', '-applicationName', f'"{app_name}"', '-versionName', f'"{version_str}"']
-            logger.info(f"Starting app {app_name} in pod {pod.metadata.name}")
-            output = exec_command_in_pod(namespace, pod.metadata.name, container_name, start_cmd, logger)
-            logger.info(f"Start output: {output}")
-
-    else:
-        # Timeout or pod not ready, handle accordingly
-        logger.error(f"Failed to finish deployment {name}, pod didn't get ready: {str(e)}")
-
+    check_applications(applications, name, namespace, logger)
 
 
 @kopf.on.update('xyna.com', 'v1alpha1', 'xynafactoryservices')
 def on_update(spec, name, namespace, logger, **kwargs):
-    # Similar to on_create, possibly update deployment or re-import apps
-    logger.info(f"Received update for {name} in {namespace}")
     desired_replicas = spec.get('replicas', 1)
-
-    # Patch the deployment's replicas count to desired_replicas
     patch = {'spec': {'replicas': desired_replicas}}
-    apps_v1.patch_namespaced_deployment(name + '-deployment', namespace, patch)
-    logger.info(f"Scaled deployment {name}-deployment to {desired_replicas} replicas")
+    try:
+        apps_v1.patch_namespaced_deployment(name + '-deployment', namespace, patch)
+        applications = spec.get("applications", [])
+        check_applications(applications, name, namespace, logger)
+
+        logger.info(f"Scaled deployment {name}-deployment to {desired_replicas} replicas")
+        
+    except ApiException as e:
+        logger.error(f"Failed to patch deployment replicas: {e}")
+
 
 
 @kopf.on.delete('xyna.com', 'v1alpha1', 'xynafactoryservices')
 def on_delete(spec, name, namespace, logger, **kwargs):
-
-    # Cleanup deployment or related resources
+    deployment_name = f"{name}-deployment"
     try:
-        apps_v1.delete_namespaced_deployment(name, namespace)
-        logger.info(f"Deleted deployment {name} in {namespace}")
+        apps_v1.delete_namespaced_deployment(deployment_name, namespace)
+        logger.info(f"Deleted deployment {deployment_name} in {namespace}")
     except ApiException as e:
-        logger.error(f"Failed to delete deployment {name}: {str(e)}")
-
+        logger.error(f"Failed to delete deployment {deployment_name}: {str(e)}")
 
     servicePorts = spec.get("servicePorts", [])
     for service in servicePorts:
-        try:
-            core_v1.delete_namespaced_service(service['serviceName'], namespace)
-            logger.info(f"Deleted service {service['serviceName']} in {namespace}")
-        except ApiException as e:
-            logger.error(f"Failed to delete service {service['serviceName']}: {str(e)}")  
+        service_name = service.get('serviceName')
+        if service_name:
+            try:
+                core_v1.delete_namespaced_service(service_name, namespace)
+                logger.info(f"Deleted service {service_name} in {namespace}")
+            except ApiException as e:
+                logger.error(f"Failed to delete service {service_name}: {str(e)}")
