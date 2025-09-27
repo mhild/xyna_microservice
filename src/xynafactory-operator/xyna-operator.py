@@ -295,6 +295,12 @@ def on_create(spec, name, namespace, logger, **kwargs):
 def on_update(spec, name, namespace, logger, **kwargs):
     # Similar to on_create, possibly update deployment or re-import apps
     logger.info(f"Received update for {name} in {namespace}")
+    desired_replicas = spec.get('replicas', 1)
+    current_replicas = get_current_deployment_replicas(name, namespace)
+
+    if current_replicas != desired_replicas:
+        patch_deployment_replicas(name, namespace, desired_replicas)
+        logger.info(f"Deployment scaled to {desired_replicas}")
 
 
 @kopf.on.delete('xyna.com', 'v1alpha1', 'xynafactoryservices')
