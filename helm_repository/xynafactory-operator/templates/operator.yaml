@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xynafactory-operator
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xynafactory-operator
+  template:
+    metadata:
+      labels:
+        app: xynafactory-operator
+    spec:
+      serviceAccountName: xynafactory-operator
+      containers:
+        - name: xynafactory-operator
+          image: {{ .Values.operatorImage }}
+        #   command:
+        #    - kopf
+        #    - run
+        #    - /app/xyna-operator.py
+        #    - --verbose
+        #   env:
+        #     - name: KUBERNETES_SERVICE_HOST
+        #       valueFrom:
+        #         fieldRef:
+        #           fieldPath: status.hostIP

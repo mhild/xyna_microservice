@@ -1,0 +1,16 @@
+apiVersion: xyna.com/v1alpha1
+kind: XynaFactoryService
+metadata:
+  name: hello-microservice-app-service
+spec:
+  image: "xynafactory/factory:latest"
+  replicas: 1
+  applications:
+    - name: hello_microservice
+      appUrl: "https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.1.app"
+  servicePorts:
+    - serviceName: hello-microservice
+      ingressPrefix: /microservice
+      port: 8001
+      targetPort: 8001
+      protocol: TCP
