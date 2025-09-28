@@ -1,3 +1,8 @@
+> [!CAUTION]
+> This is a proof-of-concept - not production-ready
+> - the os architecture is limited to amd64/x86 (arm64 like apple silicon or Raspberry Pi is not supported)
+> - pinning the pod by architecture is not configurable yet (requires modification of the operator-code to pin the generated deployment). Hence, setups with heterogeneus os architectures, pods may fail.
+
 # Xyna Microservice Environment in Kubernetes
 This helm chart imports a Custom Resource Definition "XynaFactoryService" in an kubernetes cluster.
 
@@ -65,7 +70,7 @@ After installation of the helm chart, the cluster has the Custom Resource Defini
 - all Xyna-Applications must be available via an URL (Note: the webserver cannot listen on localhost this time, since it must be accessible from the pods. A LAN IP, however, should work fine).
   - A simple Hello-World application is available in folder 'example_microservice/app_repo/ello_microservice_0.1.app' and accessible vir URL https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.1.app .
 
-### Create a Custom Resource
+### Create a resource XynaFactoryService
 
 An example microservice based on aboves application:
 
@@ -138,3 +143,10 @@ This manifest requires traefik as ingress controller. With running
 kubectl apply -n xyna -f microservice-ingress.yaml
 ```
 the service is available at URL http://xyna.localhost/hello
+
+## Scaling the service
+Changing the number of replicas (i.e., to 3) is done by patching the resource:
+
+```bash
+kubectl patch XynaFactoryService hello-microservice-app-service -n xyna --type merge -p '{\"spec\": {\"replicas\": 3}}'
+```
