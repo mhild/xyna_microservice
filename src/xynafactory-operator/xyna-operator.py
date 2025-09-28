@@ -37,21 +37,27 @@ def wait_for_pods_ready(core_v1_api, namespace, label_selector, timeout=120, int
         all_ready = True
 
         for pod in pods.items:
-            ready_condition = next((cond for cond in pod.status.conditions if cond.type == "Ready"), None)
-            if not ready_condition or ready_condition.status != "True":
-                all_ready = False
-                break
+            # ready_condition = next((cond for cond in pod.status.conditions if cond.type == "Ready"), None)
+            # if not ready_condition or ready_condition.status != "True":
+            #     all_ready = False
+            #     break
             
             # If pod ready, exec command inside pod and check output
             exec_command = ["/bin/sh", "-c", "/opt/xyna/xyna_001/server/xynafactory.sh status"]  # Replace your command here
-            resp = stream(core_v1_api.connect_get_namespaced_pod_exec,
-                          pod.metadata.name,
-                          namespace,
-                          command=exec_command,
-                          stderr=True,
-                          stdin=False,
-                          stdout=True,
-                          tty=False)
+            resp = None
+            try:
+                resp = stream(core_v1_api.connect_get_namespaced_pod_exec,
+                            pod.metadata.name,
+                            namespace,
+                            command=exec_command,
+                            stderr=True,
+                            stdin=False,
+                            stdout=True,
+                            tty=False)
+            except Exception:
+                all_ready = False
+                break
+            
             if "running" not in resp:
                 all_ready = False
                 break
@@ -149,6 +155,11 @@ def make_service_object(serviceName, namespace, app_label, protocol, port, targe
     )
     return service
 
+def get_tcp_port_for_probe(servicePorts) -> int:
+    for servicePort in servicePorts:
+        if servicePort.get('protocol', 'TCP') == 'TCP':
+            return int(servicePort.get('targetPort', '8080'))
+
 def get_service_manifest(cr_service_data, app_label, namespace, logger):
 
 
@@ -161,14 +172,40 @@ def get_service_manifest(cr_service_data, app_label, namespace, logger):
     return {'serviceName': serviceName, 'body': make_service_object(serviceName, namespace, app_label, protocol, port, targetPort)}
 
 
-def make_deployment_object(name, namespace, replicas, image):
+
+def make_deployment_object(
+    name,
+    namespace,
+    replicas,
+    image,
+    tcpPort: int = None,
+    initialDelaySeconds: int = 20,
+    periodSeconds: int = 10,
+    timeoutSeconds: int = 1,
+    failureThreshold: int = 10,
+    successThreshold: int = 1
+):
     metadata = client.V1ObjectMeta(name=f'{name}-deployment', namespace=namespace)
     labels = {"app": name}
     selector = client.V1LabelSelector(match_labels=labels)
+
+    readiness_probe = None
+    if tcpPort is not None:
+        readiness_probe = client.V1Probe(
+            tcp_socket=client.V1TCPSocketAction(port=tcpPort),
+            initial_delay_seconds=initialDelaySeconds,
+            period_seconds=periodSeconds,
+            timeout_seconds=timeoutSeconds,
+            failure_threshold=failureThreshold,
+            success_threshold=successThreshold
+        )
+
     container = client.V1Container(
         name="xynafactory",
-        image=image
+        image=image,
+        readiness_probe=readiness_probe
     )
+
     pod_spec = client.V1PodSpec(containers=[container])
     template = client.V1PodTemplateSpec(
         metadata=client.V1ObjectMeta(labels=labels),
@@ -258,8 +295,10 @@ def on_create(spec, name, namespace, logger, **kwargs):
     logger.debug(f"collecting {len(servicePorts)} service ports")
     services = [get_service_manifest(servicePort, name, namespace, logger) for servicePort in servicePorts]
     logger.debug(f"Applying deployments for services")
+    
+    tcpProbePort = get_tcp_port_for_probe(servicePorts)
     for service in services:
-        
+
         core_v1.create_namespaced_service(namespace=namespace, body=service['body'])
         logger.info(f"Created service {service['serviceName']} in namespace {namespace}")
 
@@ -286,7 +325,7 @@ def on_create(spec, name, namespace, logger, **kwargs):
     #     }
     # }
 
-    deployment_manifest = make_deployment_object(name, namespace, replicas, image)
+    deployment_manifest = make_deployment_object(name, namespace, replicas, image, tcpProbePort)
     kopf.adopt(deployment_manifest)  # Mark ownership
 
     try:
