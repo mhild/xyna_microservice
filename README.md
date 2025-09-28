@@ -67,8 +67,12 @@ After installation of the helm chart, the cluster has the Custom Resource Defini
 
 ### Requirements:
 - a Xyna-Application (or a bundle of Apps), which form the microservice
-- all Xyna-Applications must be available via an URL (Note: the webserver cannot listen on localhost this time, since it must be accessible from the pods. A LAN IP, however, should work fine).
-  - A simple Hello-World application is available in folder 'example_microservice/app_repo/ello_microservice_0.1.app' and accessible vir URL https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.1.app .
+- all Xyna-Applications must be available via an URL (Note: the webserver cannot listen on localhost, since the pods must access it. A LAN IP, however, should work fine).
+  - A simple Hello-World application is available in folder 'example_microservice/app_repo/ello_microservice_0.1.app' and accessible via URL https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.1.app .
+ 
+> [!CAUTION]
+> All dependent applications have to be defined and accessible by an URL. This is also true for xyna standard modules, that do not come with the factory-image.
+> In case of dependencies between applications, the order of import must be defined via the property 'order' in the applications-section below. Otherwise, the service wil fail.
 
 ### Create a resource XynaFactoryService
 
