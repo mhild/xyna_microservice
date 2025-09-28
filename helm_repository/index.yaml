@@ -2,11 +2,19 @@ apiVersion: v1
 entries:
   xynafactory-operator:
   - apiVersion: v2
-    created: "2025-09-27T23:57:24.60885+02:00"
+    created: "2025-09-28T09:15:15.619086+02:00"
     description: Helm chart for Xyna Factory Operator and CRDs
-    digest: a553ab06540611d3dc92458bc9bb2434de4a0d5dced618e431e502ffea443655
+    digest: 05a390bab03ed87613af6611998ed3f9a2bc07b8c14172ab709c18d900a3ea92
+    name: xynafactory-operator
+    urls:
+    - https://mhild.github.io/xyna_microservice/helm_repository/xynafactory-operator-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    created: "2025-09-28T09:15:15.618807+02:00"
+    description: Helm chart for Xyna Factory Operator and CRDs
+    digest: 25eba27ecf064674ad788c50bca479af5e2e22b3b0647ee5f041cd8feba51c42
     name: xynafactory-operator
     urls:
     - https://mhild.github.io/xyna_microservice/helm_repository/xynafactory-operator-0.1.0.tgz
     version: 0.1.0
-generated: "2025-09-27T23:57:24.608333+02:00"
+generated: "2025-09-28T09:15:15.617899+02:00"

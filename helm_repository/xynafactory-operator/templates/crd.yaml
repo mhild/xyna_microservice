@@ -22,20 +22,21 @@ spec:
               properties:
                 image: { type: string }
                 replicas: { type: integer }
-                servicePorts:
-                    type: array
-                    items:
-                        type: object
-                        properties:
-                            #ingressPrefix: {type: string}
-                            serviceName: { type: string }
-                            port: { type: integer}
-                            targetPort: { type: integer}
-                            protocol: { type: string }
                 applications:
                   type: array
                   items:
                     type: object
                     properties:
+                      order: { type: integer }
                       name: { type: string }
                       appUrl: { type: string }
+                servicePorts:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      #ingressPrefix: {type: string}
+                      serviceName: { type: string }
+                      port: { type: integer }
+                      targetPort: { type: integer }
+                      protocol: { type: string }

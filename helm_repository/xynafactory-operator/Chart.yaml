@@ -1,4 +1,4 @@
 apiVersion: v2
 name: xynafactory-operator
 description: Helm chart for Xyna Factory Operator and CRDs
-version: 0.1.0
+version: 0.1.1
