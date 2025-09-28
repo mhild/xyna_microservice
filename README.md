@@ -18,17 +18,12 @@ The manifest for the ingress is not yet created automatically.
 * Kubernetes Environment is setup (Docker Desktop, k3s,...)
 * helm ( https://helm.sh/) is installed
 * For external accessibility of the service an ingress controller like Traefik or nginx is required:
-  * Installation of Traefik:
     ```bash
     helm repo add traefik https://traefik.github.io/chart
     helm repo update
-    helm install traefik traefik/traefik --wait \
-    --set ingressRoute.dashboard.enabled=true \
-    --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)' \
-    --set ingressRoute.dashboard.entryPoints={web} \
-    --set providers.kubernetesGateway.enabled=true \
-    --set gateway.listeners.web.namespacePolicy.from=All
+    helm install traefik traefik/traefik --wait --set ingressRoute.dashboard.enabled=true --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)'  --set ingressRoute.dashboard.entryPoints={web} --set providers.kubernetesGateway.enabled=true --set gateway.listeners.web.namespacePolicy.from=All
     ```
+    This makes the Traefik dashboard available at http://dashboard.localhost/dashboard/ .
 ## Create namespace
 Create a namespace in kubernetes
 ```bash
@@ -121,15 +116,15 @@ File ```microservice-ingress.yaml```:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: xyna-ingress
+  name: hello-ingress
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
-  ingressClassName: traefik
   rules:
-  - http:
+  - host: xyna.localhost
+    http:
       paths:
-      - path: /microservice
+      - path: /hello
         pathType: Prefix
         backend:
           service:
@@ -142,4 +137,4 @@ This manifest requires traefik as ingress controller. With running
 ```bash
 kubectl apply -n xyna -f microservice-ingress.yaml
 ```
-the service should be available via URL http://127.0.0.1/microservice
+the service is available at URL http://xyna.localhost/hello
