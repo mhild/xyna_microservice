@@ -66,7 +66,7 @@ After installation of the helm chart, the cluster has the Custom Resource Defini
 ## Import Xyna Microservice CRD in Kubernetes
 
 ### Requirements:
-- a Xyna-Applications (or a bundle od Apps), which are the microservice
+- a Xyna-Application (or a bundle of Apps), which form the microservice
 - all Xyna-Applications must be available via an URL (Note: the webserver cannot listen on localhost this time, since it must be accessible from the pods. A LAN IP, however, should work fine).
   - A simple Hello-World application is available in folder 'example_microservice/app_repo/ello_microservice_0.1.app' and accessible vir URL https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.1.app .
 
@@ -109,10 +109,10 @@ Important properties are:
 
 Deployment of the microservice:
 ```bash
-bubectl  apply -n xyna -f ./hello_microservice.yaml
+kubectl  apply -n xyna -f ./hello_microservice.yaml
 ```
 
-After roughly 25-30s the service should be ready.
+After approx. 25-30s the service should be ready.
 
 In order to access the service externaly, an ingress manifest for each service has to be applied:
 
