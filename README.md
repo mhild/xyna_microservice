@@ -94,12 +94,6 @@ helm repo index . --url http://localhost:8888
 helm repo add local_helm_repo http://localhost:8888/
 ```
 
-The local repository is added as shon above:
-```bash
- helm repo add local_helm_repo http://localhost:8888/
-````
-
-
 ---
 
 ## Deploying a Xyna Microservice
