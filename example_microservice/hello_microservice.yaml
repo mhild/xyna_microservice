@@ -7,7 +7,7 @@ spec:
   replicas: 1
   applications:
     - name: hello_microservice
-      appUrl: "https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.1.app"
+      appUrl: "https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.2.app"
   servicePorts:
     - serviceName: hello-microservice
       ingressPrefix: /microservice
