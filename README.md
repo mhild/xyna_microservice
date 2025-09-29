@@ -11,9 +11,9 @@ The XynaFactoryService allows to describe a Xyna Microservice by
 2. defining XynaApplications to be imported (it has to be available via URL by the cluster)
 3. service port(s) and respective target ports on the pods
 
-Such a XynaFactoryService manifest applied via kubectl will then:
--  pull xynafactory image and start it as a pod
--  import and start the defined XynaApplications (currently it is not taken care of dependencies)
+The XynaFactoryService manifest can be applied via kubectl and will:
+-  pull the defined xynafactory image and start it
+-  import and start the defined XynaApplications in the defined order (currently, it is not taken care of dependencies)
 -  create services as defined in the manifest 
 
 The manifest for the ingress is not yet created automatically.  
@@ -28,7 +28,7 @@ The manifest for the ingress is not yet created automatically.
     helm repo update
     helm install traefik traefik/traefik --wait --set ingressRoute.dashboard.enabled=true --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)'  --set ingressRoute.dashboard.entryPoints={web} --set providers.kubernetesGateway.enabled=true --set gateway.listeners.web.namespacePolicy.from=All
     ```
-    This makes the Traefik dashboard available at http://dashboard.localhost/dashboard/ .
+  
 ## Create namespace
 Create a namespace in kubernetes
 ```bash
