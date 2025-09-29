@@ -41,7 +41,7 @@ In this example the namespace 'xyna' is created, but the name is arbitrary in ge
 ```bash
  helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
  helm repo update
- helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.1 -n xyna
+ helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.2 -n xyna
 ```
 
 Alternatiely, a local repository can be used; here hosted by simple http-server:

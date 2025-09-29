@@ -200,7 +200,7 @@ def make_deployment_object(
     namespace,
     replicas,
     image,
-    nodeLabels,
+    nodeLabels = None,
     tcpPort: int = None,
     initialDelaySeconds: int = 20,
     periodSeconds: int = 10,
@@ -227,32 +227,41 @@ def make_deployment_object(
         name="xynafactory", image=image, readiness_probe=readiness_probe
     )
 
-    pod_spec = client.V1PodSpec(containers=[container])
+    # nodeAffinity
+    # Build nodeAffinity requiredDuringSchedulingIgnoredDuringExecution
+    affinity = None
+    if nodeLabels is not None:
+        match_expressions = []
+        for label in nodeLabels:
+            match_expressions.append(
+                client.V1NodeSelectorRequirement(
+                    key=label["key"], operator="In", values=[label["value"]]
+                )
+            )
+
+        node_selector_term = client.V1NodeSelectorTerm(match_expressions=match_expressions)
+        node_affinity = client.V1NodeAffinity(
+            required_during_scheduling_ignored_during_execution=client.V1NodeSelector(
+                node_selector_terms=[node_selector_term]
+            )
+        )
+        affinity = client.V1Affinity(node_affinity=node_affinity)
+
+    # Workaround: it seems, that if there is no node_affinity client.V1PodSpec() should be called
+    # without the "affinity=" argument. Otherwise, there seems the pod gets never scheduled
+    pod_spec = None
+    if affinity is None:
+        pod_spec = client.V1PodSpec(containers=[container])
+    else:
+        pod_spec = client.V1PodSpec(containers=[container], affinity=affinity)
+
     template = client.V1PodTemplateSpec(
         metadata=client.V1ObjectMeta(labels=labels), spec=pod_spec
     )
-    
-    # nodeAffinity
-    # Build nodeAffinity requiredDuringSchedulingIgnoredDuringExecution
-    match_expressions = []
-    for label in node_labels:
-        match_expressions.append(client.V1NodeSelectorRequirement(
-            key=label['key'],
-            operator="In",
-            values=[label['value']]
-        ))
-
-    node_selector_term = client.V1NodeSelectorTerm(match_expressions=match_expressions)
-    node_affinity = client.V1NodeAffinity(
-        required_during_scheduling_ignored_during_execution=client.V1NodeSelector(
-            node_selector_terms=[node_selector_term]
-        )
-    )
-    affinity = client.V1Affinity(node_affinity=node_affinity)
 
     # spec
     spec = client.V1DeploymentSpec(
-        replicas=replicas, selector=selector, template=template, affinity=affinity
+        replicas=replicas, selector=selector, template=template
     )
     deployment = client.V1Deployment(
         api_version="apps/v1", kind="Deployment", metadata=metadata, spec=spec
@@ -378,8 +387,8 @@ def on_create(spec, name, namespace, logger, **kwargs):
     replicas = spec.get("replicas", 1)
     applications = spec.get("applications", [])
     servicePorts = spec.get("servicePorts", [])
-    node_labels = spec.get('nodeLabels', [])
-    
+    nodeLabels = spec.get("nodeLabels", None)
+
     logger.debug(f"collecting {len(servicePorts)} service ports")
     services = [
         get_service_manifest(servicePort, name, namespace, logger)
