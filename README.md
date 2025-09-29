@@ -10,22 +10,29 @@
 ## 🚀 Quickstart (TL;DR)
 
 1. Create namespace
+```bash
 kubectl create namespace xyna
+```
 
 2. Add Helm repository and install Xyna Operator
+```bash
 helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
 helm repo update
 helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.2 -n xyna
+````
 
 3. Deploy Hello World microservice
+```bash
 kubectl apply -n xyna -f https://mhild.github.io/xyna_microservice/example_microservice/hello_microservice.yaml
-
+```
 4. Install ingress manifest (example for Traefik)
+```bash
 kubectl apply -n xyna -f https://mhild.github.io/xyna_microservice/example_microservice/microservice-ingress.yaml
+````
 
 5. Access the microservice
-http://xyna.localhost/hello
 
+    <http://xyna.localhost/hello>
 
 For details, see sections below.
 
@@ -57,11 +64,11 @@ Ingress manifests are **not generated automatically** and must be added manually
 
 Example: install Traefik ingress controller  
 
-    ```bash
-    helm repo add traefik https://traefik.github.io/charts
-    helm repo update
-    helm install traefik traefik/traefik --wait --set ingressRoute.dashboard.enabled=true --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)'  --set ingressRoute.dashboard.entryPoints={web} --set providers.kubernetesGateway.enabled=true --set gateway.listeners.web.namespacePolicy.from=All
-    ```
+```bash
+helm repo add traefik https://traefik.github.io/charts
+helm repo update
+helm install traefik traefik/traefik --wait --set ingressRoute.dashboard.enabled=true --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)'  --set ingressRoute.dashboard.entryPoints={web} --set providers.kubernetesGateway.enabled=true --set gateway.listeners.web.namespacePolicy.from=All
+```
   
 
 ---
@@ -79,9 +86,9 @@ kubectl create namespace xyna
 #### Using the public Helm repository
 
 ```bash
- helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
- helm repo update
- helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.2 -n xyna
+helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
+helm repo update
+helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.2 -n xyna
 ```
 
 
