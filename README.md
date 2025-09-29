@@ -4,7 +4,7 @@
 
 
 # Xyna Microservice Environment in Kubernetes
-This helm chart imports a Custom Resource Definition "XynaFactoryService" in an kubernetes cluster.
+This helm chart imports a Custom Resource Definition "XynaFactoryService" in a kubernetes cluster.
 
 The XynaFactoryService allows to describe a Xyna Microservice by
 1. xyna-factory image tag
