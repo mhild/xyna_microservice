@@ -200,6 +200,7 @@ def make_deployment_object(
     namespace,
     replicas,
     image,
+    nodeLabels,
     tcpPort: int = None,
     initialDelaySeconds: int = 20,
     periodSeconds: int = 10,
@@ -230,8 +231,28 @@ def make_deployment_object(
     template = client.V1PodTemplateSpec(
         metadata=client.V1ObjectMeta(labels=labels), spec=pod_spec
     )
+    
+    # nodeAffinity
+    # Build nodeAffinity requiredDuringSchedulingIgnoredDuringExecution
+    match_expressions = []
+    for label in node_labels:
+        match_expressions.append(client.V1NodeSelectorRequirement(
+            key=label['key'],
+            operator="In",
+            values=[label['value']]
+        ))
+
+    node_selector_term = client.V1NodeSelectorTerm(match_expressions=match_expressions)
+    node_affinity = client.V1NodeAffinity(
+        required_during_scheduling_ignored_during_execution=client.V1NodeSelector(
+            node_selector_terms=[node_selector_term]
+        )
+    )
+    affinity = client.V1Affinity(node_affinity=node_affinity)
+
+    # spec
     spec = client.V1DeploymentSpec(
-        replicas=replicas, selector=selector, template=template
+        replicas=replicas, selector=selector, template=template, affinity=affinity
     )
     deployment = client.V1Deployment(
         api_version="apps/v1", kind="Deployment", metadata=metadata, spec=spec
@@ -357,7 +378,8 @@ def on_create(spec, name, namespace, logger, **kwargs):
     replicas = spec.get("replicas", 1)
     applications = spec.get("applications", [])
     servicePorts = spec.get("servicePorts", [])
-
+    node_labels = spec.get('nodeLabels', [])
+    
     logger.debug(f"collecting {len(servicePorts)} service ports")
     services = [
         get_service_manifest(servicePort, name, namespace, logger)
@@ -375,28 +397,8 @@ def on_create(spec, name, namespace, logger, **kwargs):
 
     logger.debug(f"Preparing deployment manifest {name}")
 
-    # Prepare deployment manifest dictionary
-    # deployment_manifest = {
-    #     "apiVersion": "apps/v1",
-    #     "kind": "Deployment",
-    #     "metadata": {"name": name, "namespace": namespace},
-    #     "spec": {
-    #         "replicas": replicas,
-    #         "selector": {"matchLabels": {"app": name}},
-    #         "template": {
-    #             "metadata": {"labels": {"app": name}},
-    #             "spec": {
-    #                 "containers": [{
-    #                     "name": "xynafactory",
-    #                     "image": image
-    #                 }]
-    #             }
-    #         }
-    #     }
-    # }
-
     deployment_manifest = make_deployment_object(
-        name, namespace, replicas, image, tcpProbePort
+        name, namespace, replicas, image, nodeLabels, tcpProbePort
     )
     kopf.adopt(deployment_manifest)  # Mark ownership
 

@@ -24,6 +24,10 @@ spec:
                 replicas: { type: integer }
                 applications:
                   type: array
+                  description: |
+                    list of xyna-applications, that make up the microservice
+                    The Xyna-Application-package hast to be accessibla via the appUrl from inside the cluster.
+                    The property 'order' defines the order of import of applications in case of dependencies (lower numbers are imported earlier).
                   items:
                     type: object
                     properties:
@@ -32,6 +36,8 @@ spec:
                       appUrl: { type: string }
                 servicePorts:
                   type: array
+                  description: |
+                    definition of one or more services for which resources ar created for the microservice
                   items:
                     type: object
                     properties:
@@ -40,3 +46,13 @@ spec:
                       port: { type: integer }
                       targetPort: { type: integer }
                       protocol: { type: string }
+                nodeLabels:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                  description: List of node label key-value pairs for node affinity

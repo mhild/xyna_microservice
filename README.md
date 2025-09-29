@@ -1,7 +1,7 @@
 > [!CAUTION]
 > This is a proof-of-concept - not production-ready
 > - the os architecture is limited to amd64/x86 (arm64 like apple silicon or Raspberry Pi is not supported)
-> - pinning the pod by architecture is not configurable yet (requires modification of the operator-code to pin the generated deployment). Hence, setups with heterogeneus os architectures, pods may fail.
+
 
 # Xyna Microservice Environment in Kubernetes
 This helm chart imports a Custom Resource Definition "XynaFactoryService" in an kubernetes cluster.
@@ -24,7 +24,7 @@ The manifest for the ingress is not yet created automatically.
 * helm ( https://helm.sh/) is installed
 * For external accessibility of the service an ingress controller like Traefik or nginx is required:
     ```bash
-    helm repo add traefik https://traefik.github.io/chart
+    helm repo add traefik https://traefik.github.io/charts
     helm repo update
     helm install traefik traefik/traefik --wait --set ingressRoute.dashboard.enabled=true --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)'  --set ingressRoute.dashboard.entryPoints={web} --set providers.kubernetesGateway.enabled=true --set gateway.listeners.web.namespacePolicy.from=All
     ```
