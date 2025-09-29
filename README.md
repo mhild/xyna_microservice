@@ -36,14 +36,17 @@ kubectl create namespace xyna
 ```
 In this example the namespace 'xyna' is created, but the name is arbitrary in general.
 
-### Add help repo
-#### Use existing development repo on github
+### Add helm repository with the CRD definition and operator deployment
+#### Use development helm repository from this github repository
 ```bash
  helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
  helm repo update
  helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.2 -n xyna
 ```
 
+After installation of the helm chart, the cluster has the Custom Resource Definition 'XynaFactoryService'.
+
+#### Local helm repository for development
 Alternatiely, a local repository can be used; here hosted by simple http-server:
 Checkout the repository or put contents of folder 'helm_repository' in the filsystem.
 Change in to the folder and package/index charts:
@@ -62,7 +65,6 @@ The local repository is added as shon above:
  helm repo add local_helm_repo http://localhost:8888/
 ````
 
-After installation of the helm chart, the cluster has the Custom Resource Definition 'XynaFactoryService'.
 ## Run a Xyna Microservice (XynaFactoryService CR) in the cluster
 
 ### Requirements:
