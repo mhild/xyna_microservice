@@ -1,6 +1,7 @@
 > [!CAUTION]
 > This is a proof-of-concept - not production-ready
 > - the os architecture is limited to amd64/x86 (arm64 like apple silicon or Raspberry Pi is not supported)
+> - All steps have been tested with Kubernetes on Docker Desktop (Windows 11). The steps should be similar on othe platforms like k3s.
 
 
 # Xyna Microservice Environment in Kubernetes
