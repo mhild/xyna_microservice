@@ -1,87 +1,125 @@
+# Xyna Microservice Environment on Kubernetes
+
 > [!CAUTION]
-> This is a proof-of-concept - not production-ready
-> - the os architecture is limited to amd64/x86 (arm64 like apple silicon or Raspberry Pi is not supported)
-> - All steps have been tested with Kubernetes on Docker Desktop (Windows 11). The steps should be similar on othe platforms like k3s.
+> This project is a **proof of concept** – not production-ready.  
+> - Supported OS Architectures: **amd64/x86 only** (ARM64 platforms like Apple Silicon or Raspberry Pi are not supported).  
+> - Tested environment: **Kubernetes on Docker Desktop (Windows 11)**. Steps should also work on other platforms (e.g., *k3s*).  
+
+---
+
+## 🚀 Quickstart (TL;DR)
+
+1. Create namespace
+kubectl create namespace xyna
+
+2. Add Helm repository and install Xyna Operator
+helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
+helm repo update
+helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.2 -n xyna
+
+3. Deploy Hello World microservice
+kubectl apply -n xyna -f https://mhild.github.io/xyna_microservice/example_microservice/hello_microservice.yaml
+
+4. Install ingress manifest (example for Traefik)
+kubectl apply -n xyna -f https://mhild.github.io/xyna_microservice/example_microservice/microservice-ingress.yaml
+
+5. Access the microservice
+http://xyna.localhost/hello
 
 
-# Xyna Microservice Environment in Kubernetes
-This helm chart imports a Custom Resource Definition "XynaFactoryService" in a kubernetes cluster.
+For details, see sections below.
 
-The XynaFactoryService allows to describe a Xyna Microservice by
-1. xyna-factory image tag
-2. defining XynaApplications to be imported (it has to be available via URL by the cluster)
-3. service port(s) and respective target ports on the pods
+---
 
-The XynaFactoryService manifest can be applied via kubectl and will:
--  pull the defined xynafactory image and start it
--  import and start the defined XynaApplications in the defined order (currently, it is not taken care of dependencies)
--  create services as defined in the manifest 
+## Overview
 
-The manifest for the ingress is not yet created automatically.  
+The Helm chart deploys the **XynaFactoryService** CRD and Operator.  
+A `XynaFactoryService` resource allows you to:
 
-   
+1. Define the **XynaFactory container image** to run.  
+2. Import one or more **Xyna Applications** (packaged and available via URL).  
+3. Expose services at specific **ports** inside the cluster.  
+
+When applied, the CR:  
+- Pulls and starts the given Xyna Factory image.  
+- Imports the listed Xyna Applications (import order must be specified manually).  
+- Creates Kubernetes Services for the defined ports.  
+
+Ingress manifests are **not generated automatically** and must be added manually.
+
+---
+
 ## Prerequisites
-* Kubernetes Environment is setup (Docker Desktop, k3s,...)
-* helm ( https://helm.sh/) is installed
-* For external accessibility of the service an ingress controller like Traefik or nginx is required:
+
+- A running **Kubernetes cluster** (e.g., Docker Desktop, k3s).  
+- **Helm** installed ([https://helm.sh](https://helm.sh/)).  
+- An **Ingress controller** such as *Traefik* or *NGINX* if you want external access.  
+
+Example: install Traefik ingress controller  
+
     ```bash
     helm repo add traefik https://traefik.github.io/charts
     helm repo update
     helm install traefik traefik/traefik --wait --set ingressRoute.dashboard.enabled=true --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)'  --set ingressRoute.dashboard.entryPoints={web} --set providers.kubernetesGateway.enabled=true --set gateway.listeners.web.namespacePolicy.from=All
     ```
   
-## Create namespace
-Create a namespace in kubernetes
+
+---
+
+## Installation
+
+### 1. Create a namespace
+
 ```bash
 kubectl create namespace xyna
 ```
-In this example the namespace 'xyna' is created, but the name is arbitrary in general.
 
-### Add helm repository with the CRD definition and operator deployment
-#### Use development helm repository from this github repository
+### 2. Install the CRD and Operator
+
+#### Using the public Helm repository
+
 ```bash
  helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
  helm repo update
  helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.2 -n xyna
 ```
 
-After installation of the helm chart, the cluster has the Custom Resource Definition 'XynaFactoryService'.
 
-#### Local helm repository for development
-Alternatiely, a local repository can be used; here hosted by simple http-server:
-Checkout the repository or put contents of folder 'helm_repository' in the filsystem.
-Change in to the folder and package/index charts:
+#### Using a local Helm repository (development)
+
 ```bash
 helm package ./xynafactory-operator
 helm repo index . --url http://localhost:8888
-````
 
-Start http-server in folder. Here, the python module http.server is used:
-```bash
-python -m http.server 8888
-````
+helm repo add local_helm_repo http://localhost:8888/
+```
 
 The local repository is added as shon above:
 ```bash
  helm repo add local_helm_repo http://localhost:8888/
 ````
 
-## Run a Xyna Microservice (XynaFactoryService CR) in the cluster
 
-### Requirements:
-- a Xyna-Application (or a bundle of Apps), which define the microservice
-- all Xyna-Applications must be available via an URL (Note: the webserver cannot listen on localhost, since the pods must access it. A LAN IP, however, should work fine).
-  - A simple Hello-World application is available in folder 'example_microservice/app_repo/ello_microservice_0.2.app' and accessible via URL https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.2.app .
- 
+---
+
+## Deploying a Xyna Microservice
+
+### Requirements
+- At least one **Xyna Application** (or bundle).  
+- Applications must be downloadable via URL (reachable from inside the cluster).  
+
+Example Hello World application:  
+[hello_microservice_0.2.app](https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.2.app)  
+
 > [!CAUTION]
-> All dependent applications have to be defined and accessible by an URL. This is also true for xyna standard modules, that do not come with the factory-image.
-> In case of dependencies between applications, the order of import must be defined via the property 'order' in the applications-section below. Otherwise, the service wil fail.
+> - All dependent applications must also be declared and accessible by URL.  
+> - Dependencies must be ordered manually using the `order` property.  
 
-### Create a resource XynaFactoryService
+---
 
-An example microservice based on aboves application:
+### Example Manifest: `hello_microservice.yaml`
 
-File ```hello_microservice.yaml```:
+
 ```yaml
 apiVersion: xyna.com/v1alpha1
 kind: XynaFactoryService
@@ -101,29 +139,36 @@ spec:
       protocol: TCP
 ```
 
-Important properties are:
- - spec.image -> image of xynafactory which is used as runtime engine for the applications(s)
- - replicas -> no. of pods created
- - applications: list of applications imported into the microservice
-   - name: exact name of the xyna application
-   - order: in case of multiple applications 'order' defines the order of app import to take care of dependencies. Lower numbers are imported first. Applications without 'order' are imported at the end in arbitrary order.
-   - appUrl: URL to the application-package - must be accessible from inside the cluster.
- - servicePorts -> List of ports exposed in the cluster; typically, these are the endpoints of triggers in one or more of the applications
-   - serviceName: name of the service. Must be dns_1035 conform (no underscore) 
-   - port: port exposed by the service
-   - targetPort: port, the pods listen on (i.e., port of an trigger exposed by the applications)
-   - protocol: TCP|UDP - default is TCP
 
-Deployment of the microservice:
+**Key Properties**  
+- `image`: Xyna Factory runtime image.  
+- `replicas`: Number of pods to run.  
+- `applications`: List of imported apps.  
+  - `order`: Controls import sequence.  
+  - `appUrl`: Must be reachable inside the cluster.  
+- `servicePorts`: Exposed endpoints in the cluster.  
+  - `serviceName`: Must be DNS-1035 compliant (no underscores).  
+  - `port`: Exposed service port.  
+  - `targetPort`: Trigger port inside the container.  
+  - `protocol`: Default is TCP.  
+
+Apply the manifest:
+
+
 ```bash
 kubectl  apply -n xyna -f ./hello_microservice.yaml
 ```
 
-After approx. 25-30s the service should be ready (the deployment uses one of the defined TCP servicePorts as readiness probe).
 
-In order to access the service externaly, an ingress manifest for each service has to be applied:
+After ~25–30s the service should be ready.
 
-File ```microservice-ingress.yaml```:
+---
+
+### Exposing the Service Externally
+
+Create `microservice-ingress.yaml`:  
+
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -145,15 +190,35 @@ spec:
               number: 8001
 ```
 
-This manifest requires traefik as ingress controller. With running
+
+Apply it:  
+
+
 ```bash
 kubectl apply -n xyna -f microservice-ingress.yaml
 ```
-the service is available at URL http://xyna.localhost/hello
 
-## Scaling the service
-Changing the number of replicas (i.e., to 3) is done by patching the resource:
+Now the service can be accessed at:  
+[http://xyna.localhost/hello](http://xyna.localhost/hello)  
+
+---
+
+## Scaling
+
+Increase replicas by patching the CR:
+
 
 ```bash
 kubectl patch XynaFactoryService hello-microservice-app-service -n xyna --type merge -p '{\"spec\": {\"replicas\": 3}}'
 ```
+
+
+---
+
+## Known Limitations
+
+- **No automated dependency management** for applications.  
+- **Ingress manifests must be created manually**.  
+- **Namespace defaults**: All examples use `xyna`. If you use another namespace, ensure all commands and manifests are updated.  
+
+---
