@@ -63,12 +63,12 @@ The local repository is added as shon above:
 ````
 
 After installation of the helm chart, the cluster has the Custom Resource Definition 'XynaFactoryService'.
-## Import Xyna Microservice CRD in Kubernetes
+## Run a Xyna Microservice (XynaFactoryService CR) in the cluster
 
 ### Requirements:
-- a Xyna-Application (or a bundle of Apps), which form the microservice
+- a Xyna-Application (or a bundle of Apps), which define the microservice
 - all Xyna-Applications must be available via an URL (Note: the webserver cannot listen on localhost, since the pods must access it. A LAN IP, however, should work fine).
-  - A simple Hello-World application is available in folder 'example_microservice/app_repo/ello_microservice_0.1.app' and accessible via URL https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.1.app .
+  - A simple Hello-World application is available in folder 'example_microservice/app_repo/ello_microservice_0.2.app' and accessible via URL https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.2.app .
  
 > [!CAUTION]
 > All dependent applications have to be defined and accessible by an URL. This is also true for xyna standard modules, that do not come with the factory-image.
@@ -90,7 +90,7 @@ spec:
   applications:
     - name: hello_microservice
       order: 1
-      appUrl: "https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.1.app"
+      appUrl: "https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.2.app"
   servicePorts:
     - serviceName: hello-microservice
       port: 8001
@@ -116,7 +116,7 @@ Deployment of the microservice:
 kubectl  apply -n xyna -f ./hello_microservice.yaml
 ```
 
-After approx. 25-30s the service should be ready.
+After approx. 25-30s the service should be ready (the deployment uses one of the defined TCP servicePorts as readiness probe).
 
 In order to access the service externaly, an ingress manifest for each service has to be applied:
 
