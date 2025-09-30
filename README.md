@@ -1,34 +1,53 @@
 # Xyna Microservice Environment on Kubernetes
 
+This project defines a Kubernetes custom resource (CRD, custom resource definition) "XynaFactoryService" plus an operator implementation, that can handle resource manifests of this kind.
+
+Goal: after a one-off basis installation of these components, microservices running on the xyna platform is simply described by a yaml files (XynaFactoryService manifests) with properties:
+
+  - factory image to use
+  - list of xyna applications
+  - service ports to be exposed (matching the triggers of the applications)
+
+--> no need to build an image; the operator for the CRD will deploy pods with the base image, import+start the applications and create the services in the cluster.
+
+--> manual step: an ingress has to be created which makes the internal service ports available from outside the cluster.
+
 > [!CAUTION]
 > This project is a **proof of concept** – not production-ready.  
+>
 > - Supported OS Architectures: **amd64/x86 only** (ARM64 platforms like Apple Silicon or Raspberry Pi are not supported).  
 > - Tested environment: **Kubernetes on Docker Desktop (Windows 11)**. Steps should also work on other platforms (e.g., *k3s*).  
 
 ---
 
 ## 🚀 Quickstart (TL;DR)
+*Prerequisite: Ingress controller Traefik is installed & ready to use*
 
 1. Create namespace
-```bash
-kubectl create namespace xyna
-```
+
+    ```bash
+    kubectl create namespace xyna
+    ```
 
 2. Add Helm repository and install Xyna Operator
-```bash
-helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
-helm repo update
-helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.3 -n xyna
-````
+
+    ```bash
+    helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
+    helm repo update
+    helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.3 -n xyna
+    ````
 
 3. Deploy Hello World microservice
-```bash
-kubectl apply -n xyna -f https://mhild.github.io/xyna_microservice/example_microservice/hello_microservice.yaml
-```
+
+    ```bash
+    kubectl apply -n xyna -f https://mhild.github.io/xyna_microservice/example_microservice/hello_microservice.yaml
+    ```
+
 4. Install ingress manifest (example for Traefik)
-```bash
-kubectl apply -n xyna -f https://mhild.github.io/xyna_microservice/example_microservice/microservice-ingress.yaml
-````
+
+    ```bash
+    kubectl apply -n xyna -f https://mhild.github.io/xyna_microservice/example_microservice/microservice-ingress.yaml
+    ````
 
 5. Access the microservice
 
@@ -48,6 +67,7 @@ A `XynaFactoryService` resource allows you to:
 3. Expose services at specific **ports** inside the cluster.  
 
 When applied, the CR:  
+
 - Pulls and starts the given Xyna Factory image.  
 - Imports the listed Xyna Applications (import order must be specified manually).  
 - Creates Kubernetes Services for the defined ports.  
@@ -70,10 +90,10 @@ helm repo update
 helm install traefik traefik/traefik --wait --set ingressRoute.dashboard.enabled=true --set ingressRoute.dashboard.matchRule='Host(`dashboard.localhost`)'  --set ingressRoute.dashboard.entryPoints={web} --set providers.kubernetesGateway.enabled=true --set gateway.listeners.web.namespacePolicy.from=All
 ```
   
-
 ---
 
-## Installation
+## Base Installation
+This is a one-off step per cluster/namespace.
 
 ### 1. Create a namespace
 
@@ -91,7 +111,6 @@ helm repo update
 helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.3 -n xyna
 ```
 
-
 #### Using a local Helm repository (development)
 
 ```bash
@@ -106,6 +125,7 @@ helm repo add local_helm_repo http://localhost:8888/
 ## Deploying a Xyna Microservice
 
 ### Requirements
+
 - At least one **Xyna Application** (or bundle).  
 - Applications must be downloadable via URL (reachable from inside the cluster).  
 
@@ -113,13 +133,13 @@ Example Hello World application:
 [hello_microservice_0.2.app](https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.2.app)  
 
 > [!CAUTION]
+>
 > - All dependent applications must also be declared and accessible by URL.  
 > - Dependencies must be ordered manually using the `order` property.  
 
 ---
 
 ### Example Manifest: `hello_microservice.yaml`
-
 
 ```yaml
 apiVersion: xyna.crd/v1alpha1
@@ -140,8 +160,8 @@ spec:
       protocol: TCP
 ```
 
-
 **Key Properties**  
+
 - `image`: Xyna Factory runtime image.  
 - `replicas`: Number of pods to run.  
 - `applications`: List of imported apps.  
@@ -155,11 +175,9 @@ spec:
 
 Apply the manifest:
 
-
 ```bash
 kubectl  apply -n xyna -f ./hello_microservice.yaml
 ```
-
 
 After ~25–30s the service should be ready.
 
@@ -168,7 +186,6 @@ After ~25–30s the service should be ready.
 ### Exposing the Service Externally
 
 Create `microservice-ingress.yaml`:  
-
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -191,9 +208,7 @@ spec:
               number: 8001
 ```
 
-
 Apply it:  
-
 
 ```bash
 kubectl apply -n xyna -f microservice-ingress.yaml
@@ -208,11 +223,9 @@ Now the service can be accessed at:
 
 Increase replicas by patching the CR:
 
-
 ```bash
 kubectl patch XynaFactoryService hello-microservice-app-service -n xyna --type merge -p '{\"spec\": {\"replicas\": 3}}'
 ```
-
 
 ---
 

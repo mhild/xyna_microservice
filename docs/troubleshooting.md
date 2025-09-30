@@ -8,6 +8,7 @@ This document lists common problems and their solutions when working with the Xy
 
 **Cause:** The cluster cannot fetch the specified image (e.g., typo in `spec.image`, missing registry login).  
 **Solution:**  
+
 - Verify the `spec.image` field in your `XynaFactoryService`.  
 - Make sure the image is publicly available or configure image pull secrets.  
 
@@ -17,6 +18,7 @@ This document lists common problems and their solutions when working with the Xy
 
 **Cause:** Applications have dependencies, but import order was not defined.  
 **Solution:**  
+
 - In the CR YAML, set the `order` property for each application.  
 - Define lower numbers for dependencies that must load first.  
 
@@ -26,6 +28,7 @@ This document lists common problems and their solutions when working with the Xy
 
 **Cause:** No ingress manifest was applied, or Ingress controller not installed.  
 **Solution:**  
+
 - Verify that Traefik or NGINX ingress controller is running.  
 - Apply the `microservice-ingress.yaml` example.  
 - Check DNS resolution for the `host` field (e.g., add `xyna.localhost` entry to `/etc/hosts` if needed).  
@@ -36,6 +39,7 @@ This document lists common problems and their solutions when working with the Xy
 
 **Cause:** The configured `servicePorts` values (port/targetPort) are incorrect.  
 **Solution:**  
+
 - Make sure the port in the application (trigger) matches the service definition.  
 - Check pod logs to confirm which port the application exposes.  
 
@@ -45,6 +49,7 @@ This document lists common problems and their solutions when working with the Xy
 
 **Cause:** CRD not installed yet.  
 **Solution:**  
+
 - Ensure the Helm chart for `xynafactory-operator` was installed successfully.  
 - Verify with `kubectl get crd | grep xyna`.  
 
@@ -54,5 +59,6 @@ This document lists common problems and their solutions when working with the Xy
 
 **Cause:** Path or service name mismatch in ingress manifest.  
 **Solution:**  
+
 - Double-check that the `serviceName` in ingress maps exactly to the `serviceName` in your `XynaFactoryService`.  
 - Confirm `pathType` is set to `Prefix`.  

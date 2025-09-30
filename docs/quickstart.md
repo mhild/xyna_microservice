@@ -31,7 +31,6 @@ helm repo update
 helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.2 -n xyna
 ````
 
-
 ---
 
 ## 3. Deploy Example Microservice
@@ -54,7 +53,6 @@ Apply the example ingress:
 kubectl apply -n xyna -f https://mhild.github.io/xyna_microservice/example_microservice/microservice-ingress.yaml
 ````
 
-
 The Hello World service is now accessible at:  
 [http://xyna.localhost/hello](http://xyna.localhost/hello)
 
@@ -68,7 +66,6 @@ To scale to 3 replicas:
 kubectl patch XynaFactoryService hello-microservice-app-service
 -n xyna --type merge -p '{"spec": {"replicas": 3}}'
 ````
-
 
 ---
 
