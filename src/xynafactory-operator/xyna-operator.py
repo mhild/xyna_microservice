@@ -378,7 +378,7 @@ def check_applications(_applications, name, namespace, logger):
         )
 
 
-@kopf.on.create("xyna.com", "v1alpha1", "xynafactoryservices")
+@kopf.on.create("xyna.crd", "v1alpha1", "xynafactoryservices")
 def on_create(spec, name, namespace, logger, **kwargs):
 
     logger.debug(f"creating deployment '{name}' in namespace {namespace}")
@@ -431,7 +431,7 @@ def on_create(spec, name, namespace, logger, **kwargs):
     check_applications(applications, name, namespace, logger)
 
 
-@kopf.on.update("xyna.com", "v1alpha1", "xynafactoryservices")
+@kopf.on.update("xyna.crd", "v1alpha1", "xynafactoryservices")
 def on_update(spec, name, namespace, logger, **kwargs):
     desired_replicas = spec.get("replicas", 1)
     patch = {"spec": {"replicas": desired_replicas}}
@@ -448,7 +448,7 @@ def on_update(spec, name, namespace, logger, **kwargs):
         logger.error(f"Failed to patch deployment replicas: {e}")
 
 
-@kopf.on.delete("xyna.com", "v1alpha1", "xynafactoryservices")
+@kopf.on.delete("xyna.crd", "v1alpha1", "xynafactoryservices")
 def on_delete(spec, name, namespace, logger, **kwargs):
     deployment_name = f"{name}-deployment"
     try:

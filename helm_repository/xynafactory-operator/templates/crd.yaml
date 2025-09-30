@@ -1,9 +1,9 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: xynafactoryservices.xyna.com
+  name: xynafactoryservices.xyna.crd
 spec:
-  group: xyna.com
+  group: xyna.crd
   names:
     kind: XynaFactoryService
     plural: xynafactoryservices

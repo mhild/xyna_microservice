@@ -1,4 +1,4 @@
-apiVersion: xyna.com/v1alpha1
+apiVersion: xyna.crd/v1alpha1
 kind: XynaFactoryService
 metadata:
   name: hello-microservice-app-service

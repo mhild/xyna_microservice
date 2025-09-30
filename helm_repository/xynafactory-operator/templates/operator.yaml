@@ -17,13 +17,3 @@ spec:
       containers:
         - name: xynafactory-operator
           image: {{ .Values.operatorImage }}
-        #   command:
-        #    - kopf
-        #    - run
-        #    - /app/xyna-operator.py
-        #    - --verbose
-        #   env:
-        #     - name: KUBERNETES_SERVICE_HOST
-        #       valueFrom:
-        #         fieldRef:
-        #           fieldPath: status.hostIP
