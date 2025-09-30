@@ -18,7 +18,7 @@ kubectl create namespace xyna
 ```bash
 helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
 helm repo update
-helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.2 -n xyna
+helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.3 -n xyna
 ````
 
 3. Deploy Hello World microservice
@@ -88,7 +88,7 @@ kubectl create namespace xyna
 ```bash
 helm repo add mhild.github.io https://mhild.github.io/xyna_microservice/helm_repository/
 helm repo update
-helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.2 -n xyna
+helm install xynafactory-operator mhild.github.io/xynafactory-operator --version 0.1.3 -n xyna
 ```
 
 
@@ -122,7 +122,7 @@ Example Hello World application:
 
 
 ```yaml
-apiVersion: xyna.com/v1alpha1
+apiVersion: xyna.crd/v1alpha1
 kind: XynaFactoryService
 metadata:
   name: hello-microservice-app-service
