@@ -10,7 +10,6 @@ spec:
       appUrl: "https://mhild.github.io/xyna_microservice/example_microservice/app_repo/hello_microservice_0.2.app"
   servicePorts:
     - serviceName: hello-microservice
-      ingressPrefix: /microservice
       port: 8001
       targetPort: 8001
       protocol: TCP
