@@ -1,16 +1,16 @@
 # Xyna Microservice Environment on Kubernetes
 
-This project defines a Kubernetes custom resource (CRD, custom resource definition) "XynaFactoryService" plus an operator implementation, that can handle resource manifests of this kind.
-
-Goal: after a one-off basis installation of these components, microservices running on the xyna platform is simply described by a yaml files (XynaFactoryService manifests) with properties:
-
-  - factory image to use
-  - list of xyna applications
-  - service ports to be exposed (matching the triggers of the applications)
-
---> no need to build an image; the operator for the CRD will deploy pods with the base image, import+start the applications and create the services in the cluster.
-
---> manual step: an ingress has to be created which makes the internal service ports available from outside the cluster.
+> This project defines a Kubernetes custom resource (CRD, custom resource definition) "XynaFactoryService" plus an operator implementation, that can handle resource manifests of this kind.
+>
+> 🎯 Goal: after a one-off basis installation of these components, microservices running on the xyna platform is simply described by a yaml files (XynaFactoryService manifests) with properties:
+>
+>  - factory image to use
+>  - list of xyna applications
+>  - service ports to be exposed (matching the triggers of the applications)
+>
+>✅ no need to build an image; the operator for the CRD will deploy pods with the base image, import+start the applications and create the services in the cluster.
+>
+>⛏ manual step: an ingress has to be created which makes the internal service ports available from outside the cluster.
 
 > [!CAUTION]
 > This project is a **proof of concept** – not production-ready.  
